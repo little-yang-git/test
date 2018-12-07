@@ -10,7 +10,7 @@ import pymysql as mysql
 
 def jsonfile(k, kk=None):  # n=数据库名称
     """读取数据库连接属性 返回连接属性自定a[n]"""
-    with open("./appmodel/links.json", 'rb') as f:
+    with open(sys.path[0] + "/appmodel/links.json", 'rb') as f:
         lt = json.load(f)
         return lt[k][kk] if kk in lt[k] else None if kk else lt[k] if k in lt else None
         # if kk:
@@ -153,8 +153,7 @@ class LinkApi(object):
     def goods(self, page=None, pages=None, barcode=None, start_time=None, end_time=None):
         ps = 2
         rall = []
-        apit = jsonfile('LinkApi', 'goods')
-        apitxt = apit
+        apitxt = jsonfile('LinkApi', 'goods')
         apitxt['key'] = self.__key
         if barcode: apitxt.update(barcode=barcode)
         if start_time:
@@ -169,9 +168,10 @@ class LinkApi(object):
         else:
             p = 1
         while p <= ps:
-            apitxt['timestamp'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            apitxt['page'] = p
-            signtxt = self.urlsign(apitxt)
+            apit = apitxt.copy()
+            apit['timestamp'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            apit['page'] = p
+            signtxt = self.urlsign(apit)
             apidata = self.__runapi(signtxt)
             if not apidata[0]:
                 return apidata
@@ -186,10 +186,12 @@ class LinkApi(object):
                     # 如果设置返回页数<=总页数
                     print('共检索到%d页' % pagec)
                     # 计算共多少页
-                print('检索到第%d页' % p, end=" ")
+                # print(chr(27) + "[2J")
+                sys.stdout.write('\r')
+                sys.stdout.write('检索到第%d页' % p)
+                sys.stdout.flush()
                 p += 1
             # time.sleep(1)
-        print('\n')
         return True
 
     def __goods_kwcf(self, data):
