@@ -10,7 +10,7 @@ start = datetime.datetime.now()
 
 # 通过api更新efast库位表
 d = LinkDb('GNet')
-print(d.get())
+# print(d.get())
 if d.get()[-1] is True:
     a = {"a_met": "prm.goods.inv.get"}
     pd = app_api.runapi(a,1,3)

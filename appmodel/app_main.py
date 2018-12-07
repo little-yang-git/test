@@ -27,7 +27,7 @@ class DBlink(object):
     def __enter__(self):
         if self.zt[-2:] == 'OK':
             # self.__run()
-            return self.cur, self.zt, True
+            return self.cur, self.con, self.zt, True
         else:
             return self.zt, self.zt, False
 
@@ -83,10 +83,10 @@ class LinkDb(object):
             if f[-1] is True:
                 try:
                     f[0].execute(sqltxt)
-                    f[0].commit()
+                    f[1].commit()
                     return 'Edit is OK'
                 except Exception as e:
-                    # f[0].rollback()
+                    f[1].rollback()
                     return str(e)
             else:
                 return f
@@ -96,13 +96,31 @@ class LinkDb(object):
             if f[-1] is True:
                 try:
                     f[0].executemany(sqltxt, intxt)
-                    f[0].commit()
+                    f[1].commit()
                     return 'Insert is OK'
                 except Exception as e:
-                    # f[0].rollback()
+                    f[1].rollback()
                     return str(e)
             else:
                 return f
+
+    def runsql(self, sqlf):  # sqlf=sql文件路径
+        """连接数据库执行sql文件"""
+        sql_file = sqlf
+        sql = ""
+        with open(sql_file, 'r', encoding='gbk') as f:
+            # 读取sql并转为gbk编码
+            for each_line in f:
+                sql += each_line
+        with DBlink(self.link) as f:
+            if f[-1] is True:
+                try:
+                    f[0].execute(sql)
+                    f[1].commit()
+                    return 'SqlFile is OK'
+                except Exception as e:
+                    f[1].rollback()
+                    return str(e)
 
 
 class LinkApi(object):
@@ -111,6 +129,7 @@ class LinkApi(object):
         t = jsonfile('LinkApi')
         self.__url = t['url']
         self.__key = t['key']
+        self.__runtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
     def urlsign(self, data):
         # 拼合post；sign数据
@@ -139,18 +158,21 @@ class LinkApi(object):
                 return False, '连接正常' + "/" + a['message'], a
             # 生产字典输出到data
 
-    def get(self, lx):
+    def get(self, lx='test'):
         apitxt = jsonfile('LinkApi', lx)
         apitxt['key'] = self.__key
         apitxt['timestamp'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         signtxt = self.urlsign(apitxt)
         apidata = self.__runapi(signtxt)
         if apidata[0]:
-            return True
+            return apidata
         else:
             return apidata
 
-    def goods(self, page=None, pages=None, barcode=None, start_time=None, end_time=None):
+    def goods(self, page=None, pages=None, barcode=None, start_time=None, end_time=None, update='yes'):
+        if update != 'no':
+            d = LinkDb('GNet')
+            if not d.get()[-1]: return d.get()
         ps = 2
         rall = []
         apitxt = jsonfile('LinkApi', 'goods')
@@ -159,6 +181,11 @@ class LinkApi(object):
         if start_time:
             now = (datetime.datetime.now() + datetime.timedelta(days=int(start_time))).strftime("%Y-%m-%d %H:%M:%S")
             apitxt.update(start_time=now)
+        else:
+            if update == 'yes':
+                rtime = d.select("SELECT MAX(etime) AS time FROM API_Kucun_Efast")
+                if rtime[0]['time']:
+                    apitxt.update(start_time=rtime[0]['time'].strftime("%Y-%m-%d %H:%M:%S"))
         if end_time:
             now = (datetime.datetime.now() + datetime.timedelta(days=int(end_time))).strftime("%Y-%m-%d %H:%M:%S")
             apitxt.update(end_time=now)
@@ -176,22 +203,35 @@ class LinkApi(object):
             if not apidata[0]:
                 return apidata
             else:
-                # rall += (api_kwcf(data))
+                rall += (self.__goods_kwcf(apidata[-1]))
                 # 将每页数据汇总
                 if p == page or p == 1:
                     # 如果为首次循环
                     pagec = apidata[-1]['data']['filter'].get('page_count')
+                    rowc = apidata[-1]['data']['filter'].get('record_count')
                     # 获取总页数
-                    ps = pages + page - 1 if pages and pages + page - 1 <= pagec else pagec
+                    ps = pages + p - 1 if pages and pages + p - 1 <= pagec else pagec
                     # 如果设置返回页数<=总页数
-                    print('共检索到%d页' % pagec)
+                    print('共检索到%d页，%s条记录' % (pagec, rowc))
                     # 计算共多少页
                 sys.stdout.write('\r')
                 sys.stdout.write('检索到第%d页' % p)
                 sys.stdout.flush()
                 p += 1
         print('\n')
-        return True
+        if update == 'no':
+            return True, rall
+        elif update == 'all':
+            sql = "insert into API_Kucun_Efast(SPDM,SPTM,COLOR_ID,SIZE_ID,SL,KW,etime) values(%s,%s,%s,%s,%s,%s,%s)"
+            dtt = d.edit("delete from API_Kucun_Efast")
+            itt = d.insert(sql, rall)
+            return True, dtt, itt
+        elif update == 'yes':
+            sqlt = "insert into API_Kucun_Efast_T(SPDM,SPTM,COLOR_ID,SIZE_ID,SL,KW,etime) values(%s,%s,%s,%s,%s,%s,%s)"
+            dttt = d.edit("delete from API_Kucun_Efast_T")
+            ittt = d.insert(sqlt, rall)
+
+            return True, dttt, ittt
 
     def __goods_kwcf(self, data):
         # 拆分商品资料字典
@@ -215,7 +255,9 @@ class LinkApi(object):
             # 将字典拼合为list
             cs = uu.pop(1)
             # 提取sku字段
-            uu.extend([cs[-4:-2], cs[-2:]])
+            uu.insert(2, cs[-4:-2])
+            uu.insert(3, cs[-2:])
+            uu.append(self.__runtime)
             # 截取sku中，色号尺码号部分拆分字段
             uu = tuple(uu)
             # 转换为元组
@@ -227,79 +269,3 @@ class LinkApi(object):
         a['a'] = '1'
         b = self.urlsign(a)
         return b
-
-# def runapi(dtxt, page=1, pages=None):
-#     # api访问主程序 dtxt=访问参数；page=开始页数；pages=返回页数
-#     d = dtxt
-#     p = page
-#     ps = page + 3
-#     rall = []
-#     while p <= ps:
-#         d['page'] = p
-#         dout = urlsign(d)
-#         # 解析访问参数
-#         r = requests.post(dout['url'], dout['data'])
-#         # api请求
-#         if r.status_code != 200:
-#             print('连接错误！')
-#             sys.exit()
-#         # else:
-#         #     print(dout['data'])
-#         data = r.json()
-#         # 生产字典输出到data
-#         if p == page:
-#             # 如果为首次循环
-#             pagec = data['data']['filter'].get('page_count')
-#             # 获取总页数
-#             ps = pages + page - 1 if pages and pages + page - 1 <= pagec else pagec
-#             # 如果设置返回页数<=总页数
-#             print(pagec)
-#             # 计算共多少页
-#         rall += (api_kwcf(data))
-#         # 将每页数据汇总
-#         print(p)
-#         # 打印页数
-#         # time.sleep(1)
-#         # 等待
-#         p += 1
-#     return rall
-#
-#
-
-#
-#
-# def runapi(dtxt, page=1, pages=None):
-#     # api访问主程序 dtxt=访问参数；page=开始页数；pages=返回页数
-#     d = dtxt
-#     p = page
-#     ps = page + 3
-#     rall = []
-#     while p <= ps:
-#         d['page'] = p
-#         dout = urlsign(d)
-#         # 解析访问参数
-#         r = requests.post(dout['url'], dout['data'])
-#         # api请求
-#         if r.status_code != 200:
-#             print('连接错误！')
-#             sys.exit()
-#         # else:
-#         #     print(dout['data'])
-#         data = r.json()
-#         # 生产字典输出到data
-#         if p == page:
-#             # 如果为首次循环
-#             pagec = data['data']['filter'].get('page_count')
-#             # 获取总页数
-#             ps = pages + page - 1 if pages and pages + page - 1 <= pagec else pagec
-#             # 如果设置返回页数<=总页数
-#             print(pagec)
-#             # 计算共多少页
-#         rall += (api_kwcf(data))
-#         # 将每页数据汇总
-#         print(p)
-#         # 打印页数
-#         # time.sleep(1)
-#         # 等待
-#         p += 1
-#     return rall
