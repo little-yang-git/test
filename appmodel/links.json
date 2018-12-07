@@ -1,37 +1,64 @@
 {
-  "Gdata": {
-    "lx": "mssql",
-    "host": "192.168.1.1",
-    "user": "sa",
-    "pw": "FUFEN1230jincheng456",
-    "db": "Gdata"
+  "LinkDB": {
+    "Gdata": {
+      "lx": "mssql",
+      "host": "192.168.1.1",
+      "user": "sa",
+      "pw": "FUFEN1230jincheng456",
+      "db": "Gdata"
+    },
+    "GNet": {
+      "lx": "mssql",
+      "host": "192.168.1.1",
+      "user": "sa",
+      "pw": "FUFEN1230jincheng456",
+      "db": "GNet2"
+    },
+    "BSERP2": {
+      "lx": "mssql",
+      "host": "192.168.1.1",
+      "user": "sa",
+      "pw": "FUFEN1230jincheng456",
+      "db": "BSERP2"
+    },
+    "GNetMy": {
+      "lx": "mysql",
+      "host": "192.168.8.82",
+      "user": "root",
+      "pw": "FUFEN1230jincheng456",
+      "db": "GNet"
+    },
+    "GdataOut": {
+      "lx": "mssql",
+      "host": "60.29.21.146",
+      "user": "sa",
+      "pw": "FUFEN1230jincheng456",
+      "db": "Gdata"
+    }
   },
-  "GNet": {
-    "lx": "mssql",
-    "host": "192.168.1.1",
-    "user": "sa",
-    "pw": "FUFEN1230jincheng456",
-    "db": "GNet2"
-  },
-  "BSERP2": {
-    "lx": "mssql",
-    "host": "192.168.1.1",
-    "user": "sa",
-    "pw": "FUFEN1230jincheng456",
-    "db": "BSERP2"
-  },
-  "GNetMy": {
-    "lx": "mysql",
-    "host": "192.168.8.82",
-    "user": "root",
-    "pw": "FUFEN1230jincheng456",
-    "db": "GNet"
-  },
-  "GdataOut": {
-    "lx": "mssql",
-    "host": "60.29.21.146",
-    "user": "sa",
-    "pw": "FUFEN1230jincheng456",
-    "db": "Gdata"
+  "LinkApi": {
+    "url": "http://openapi.baotayun.com/openapi/webefast/web/?app_act=openapi/router",
+    "key": "bfd7910d15467517613d9661835afc41",
+    "test": {
+      "method": "prm.goods.inv.get",
+      "format": "json",
+      "key": "",
+      "v": "2.0",
+      "sign_method": "md5",
+      "timestamp": "",
+      "page": "1",
+      "store_code": "001",
+      "page_size": "1"
+    },
+    "goods": {
+      "method": "prm.goods.inv.get",
+      "format": "json",
+      "key": "",
+      "v": "2.0",
+      "sign_method": "md5",
+      "timestamp": "",
+      "page": "1",
+      "store_code": "001"
+    }
   }
 }
