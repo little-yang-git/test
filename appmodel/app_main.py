@@ -106,7 +106,7 @@ class LinkDb(object):
 
     def runsql(self, sqlf):  # sqlf=sql文件路径
         """连接数据库执行sql文件"""
-        sql_file = sqlf
+        sql_file = "/Volumes/web/TP/app/" + sqlf + ".sql"
         sql = ""
         with open(sql_file, 'r', encoding='gbk') as f:
             # 读取sql并转为gbk编码
@@ -201,7 +201,10 @@ class LinkApi(object):
             signtxt = self.urlsign(apit)
             apidata = self.__runapi(signtxt)
             if not apidata[0]:
-                return apidata
+                if update == 'yes':
+                    return '没有数据需要更新'
+                else:
+                    return apidata
             else:
                 rall += (self.__goods_kwcf(apidata[-1]))
                 # 将每页数据汇总
@@ -230,8 +233,8 @@ class LinkApi(object):
             sqlt = "insert into API_Kucun_Efast_T(SPDM,SPTM,COLOR_ID,SIZE_ID,SL,KW,etime) values(%s,%s,%s,%s,%s,%s,%s)"
             dttt = d.edit("delete from API_Kucun_Efast_T")
             ittt = d.insert(sqlt, rall)
-
-            return True, dttt, ittt
+            sf = d.runsql('API_Kucun_Efast')
+            return True, dttt, ittt, sf
 
     def __goods_kwcf(self, data):
         # 拆分商品资料字典
