@@ -186,12 +186,11 @@ class LinkApi(object):
                     # 如果设置返回页数<=总页数
                     print('共检索到%d页' % pagec)
                     # 计算共多少页
-                # print(chr(27) + "[2J")
                 sys.stdout.write('\r')
                 sys.stdout.write('检索到第%d页' % p)
                 sys.stdout.flush()
                 p += 1
-            # time.sleep(1)
+        print('\n')
         return True
 
     def __goods_kwcf(self, data):
