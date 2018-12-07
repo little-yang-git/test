@@ -13,7 +13,7 @@ d = LinkDb('GNet')
 print(d.get())
 if d.get()[-1] is True:
     a = {"a_met": "prm.goods.inv.get"}
-    pd = app_api.runapi(a)
+    pd = app_api.runapi(a,1,3)
     # print(pd)
     sql = "insert into API_Kucun_Efast values(%s,%s,%s,%s,%s,%s)"
     d.edit("delete from API_Kucun_Efast")
