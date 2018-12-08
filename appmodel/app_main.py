@@ -382,5 +382,5 @@ class LinkPhoto(object):
         if dp:
             self.__delfile(dp)
         if rp:
-            self.__rephoto(rp, self.Psize)
+            self.__rephoto(rp, self.psize)
         return '修改数量：' + str(len(rp)), rp, '删除数量：' + str(len(dp)), dp, '检索文件数量：' + str(len(pd)), dtt, itt
