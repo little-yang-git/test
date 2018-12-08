@@ -9,8 +9,10 @@ start = datetime.datetime.now()
 #     sys.stdout.flush()
 #     time.sleep(2)
 
-a = LinkPhoto('/Volumes/图片/整理', view=1)
-print(a.nas())
+a = LinkPhoto('/Volumes/图片').nas()
+
+for i in a:
+    print(i)
 
 end = datetime.datetime.now()
 print('Running time: %s Seconds' % (end - start))
