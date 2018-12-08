@@ -277,10 +277,13 @@ class LinkApi(object):
 
 
 class LinkPhoto(object):
-    def __init__(self, dirs, dlx=True, psize=600):
+
+    def __init__(self, dirs, delfile=True, photosize=600, view=False):
+        # 检索目录=dirs; 是否删除文件=delfile; 图片修改最长边=photosize; 显示检索过程=view
         self.dirs = dirs
-        self.dlx = dlx
-        self.psize = psize
+        self.dlx = delfile
+        self.psize = photosize
+        self.view = view
 
     def __delfile(self, files):
         # 根据files列表，删除图片文件
@@ -311,8 +314,8 @@ class LinkPhoto(object):
 
     def nas(self):
         # 图片检索主程序
-        d = LinkDb('GNet')
-        if not d.get()[-1]: return d.get()
+        db = LinkDb('GNet')
+        if not db.get()[-1]: return db.get()
         # 检查数据库是否可以连接
         dt = self.dirs
         # 接受检索路径
@@ -326,7 +329,7 @@ class LinkPhoto(object):
         # 删除列表
         for r, ds, fs in os.walk(dt):
             # 遍历检索目录
-            print(r)
+            if self.view: print(r)
             for d in ds:
                 # 遍历子目录
                 ft = ''
@@ -374,8 +377,8 @@ class LinkPhoto(object):
                 pd.append((os.path.join(r, d), d, fg[0], fg[1], fg[2], ft))
                 # 将目录详细数据添加到 pd 列表
         sql = "insert into API_Photo_File values(%s,%s,%s,%s,%s,%s)"
-        dtt = d.edit("delete from API_Photo_File")
-        itt = d.insert(sql, pd)
+        dtt = db.edit("delete from API_Photo_File")
+        itt = db.insert(sql, pd)
         if dp:
             return self.__delfile(dp)
         if rp:
