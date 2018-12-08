@@ -23,6 +23,7 @@ def jsonfile(k, kk=None):  # n=数据库名称
 
 class DBlink(object):
     def __init__(self, link):
+        # 数据库连接关键字=link;
         self.link = link
         self.zt = str(self.__run())
 
@@ -60,9 +61,11 @@ class LinkDb(object):
 
     # __slots__ = ('text', 'lx')
 
-    def __init__(self, lk):
+    def __init__(self, lk, inout='in'):
+        # 数据库关键字=lk; 内外网参数=inout
         self.__lk = lk
         self.link = jsonfile('LinkDB', lk)
+        self.link['host'] = self.link['host'][inout]
 
     def get(self):
         with DBlink(self.link) as f:
@@ -314,6 +317,7 @@ class LinkPhoto(object):
 
     def nas(self):
         # 图片检索主程序
+        print('检索路径为' + self.dirs)
         db = LinkDb('GNet')
         if not db.get()[-1]: return db.get()
         # 检查数据库是否可以连接

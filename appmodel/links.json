@@ -2,38 +2,53 @@
   "LinkDB": {
     "Gdata": {
       "lx": "mssql",
-      "host": "192.168.1.1",
+      "host": {
+        "in": "192.168.1.1",
+        "out": "60.29.21.146"
+      },
       "user": "sa",
       "pw": "FUFEN1230jincheng456",
       "db": "Gdata"
     },
     "GNet": {
       "lx": "mssql",
-      "host": "192.168.1.1",
+      "host": {
+        "in": "192.168.1.1",
+        "out": "60.29.21.146"
+      },
       "user": "sa",
       "pw": "FUFEN1230jincheng456",
       "db": "GNet2"
     },
     "BSERP2": {
       "lx": "mssql",
-      "host": "192.168.1.1",
+      "host": {
+        "in": "192.168.1.1",
+        "out": "60.29.21.146"
+      },
       "user": "sa",
       "pw": "FUFEN1230jincheng456",
       "db": "BSERP2"
     },
     "GNetMy": {
       "lx": "mysql",
-      "host": "192.168.8.82",
+      "host": {
+        "in": "192.168.8.80",
+        "out": "60.29.21.147"
+      },
       "user": "root",
       "pw": "FUFEN1230jincheng456",
       "db": "GNet"
     },
-    "GdataOut": {
+    "GNetBak": {
       "lx": "mssql",
-      "host": "60.29.21.146",
+      "host": {
+        "in": "192.168.8.80",
+        "out": "60.29.21.147"
+      },
       "user": "sa",
       "pw": "FUFEN1230jincheng456",
-      "db": "Gdata"
+      "db": "GNetBak"
     }
   },
   "LinkApi": {
