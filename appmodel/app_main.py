@@ -6,6 +6,8 @@ import requests
 import sys
 import pymssql as mssql
 import pymysql as mysql
+import os
+from PIL import Image
 
 
 def jsonfile(k, kk=None):  # n=数据库名称
@@ -272,3 +274,110 @@ class LinkApi(object):
         a['a'] = '1'
         b = self.urlsign(a)
         return b
+
+
+class LinkPhoto(object):
+    def __init__(self, dirs, dlx=True, psize=600):
+        self.dirs = dirs
+        self.dlx = dlx
+        self.psize = psize
+
+    def __delfile(self, files):
+        # 根据files列表，删除图片文件
+        f = []
+        for file in files:
+            if os.path.exists(file):
+                os.remove(file)
+            else:
+                f.append(file)
+        if f:
+            return False, f
+        else:
+            return True
+
+    def __rephoto(self, files, rs):  # rs为最长边数值
+        # 修改图片文件像素
+        for file in files:
+            im = Image.open(file)
+            (x, y) = im.size
+            if x > y:
+                x_s = rs
+                y_s = round(y * rs / x)
+            else:
+                y_s = rs
+                x_s = round(x * rs / y)
+            out = im.resize((x_s, y_s), Image.ANTIALIAS)
+            out.save(file.replace('@.', '@S.'))
+
+    def run(self):
+        # 图片检索主程序
+        d = LinkDb('GNet')
+        if not d.get()[-1]: return d.get()
+        # 检查数据库是否可以连接
+        dt = self.dirs
+        # 接受检索路径
+        fn = ['1@', '2@']
+        # 图片类型列表
+        pd = []
+        # 输出列表
+        rp = []
+        # 生成小图列表
+        dp = []
+        # 删除列表
+        for r, ds, fs in os.walk(dt):
+            # 遍历检索目录
+            print(r)
+            for d in ds:
+                # 遍历子目录
+                ft = ''
+                # 目录状态参数
+                fg = d.split("@") if d.count("@") == 2 else ['', '', '']
+                # 如果有2个@，进行商品信息分割
+                fu = os.listdir(os.path.join(r, d))
+                # 将子目录中所有文件及文件夹存入 fu
+                fl = [i.lower() for i in fu]
+                # 将 fu 转为小写生成 fl
+                for flist in fn:
+                    # 遍历图片类型列表
+                    f = flist + '.jpg'
+                    fs = flist + 's.jpg'
+                    if f in fl:
+                        # 如果目录中有图片类型
+                        fun = os.path.join(r, d, fu[fl.index(f)])
+                        ft += f
+                        if fs in fl:
+                            # 如果目录中有小图
+                            fmn = os.path.join(r, d, fu[fl.index(fs)])
+                            # 生成文件绝对路径
+                            fsize = os.path.getsize(fmn)
+                            fsize = round(fsize / 1024)
+                            if fsize > 100 and self.dlx:
+                                # 如果小图文件大于100k 并 删除标记为 True
+                                dp.append(fmn)
+                                # 加入删除列表
+                                rp.append(fun)
+                                # 加入生成小图列表
+                        else:
+                            rp.append(fun)
+                            # 如果目录中没有小图 加入生成小图列表
+                    else:
+                        # 如果目录中没有图片类型
+                        if fs in fl:
+                            # 如果目录中有小图文件
+                            fmn = os.path.join(r, d, fu[fl.index(fs)])
+                            dp.append(fmn)
+                            # 加入删除列表
+                ft = ft.replace('1@.jpg', '模特图')
+                ft = ft.replace('2@.jpg', '景物图')
+                ft = ft or '无主图'
+                # 生成目录状态
+                pd.append((os.path.join(r, d), d, fg[0], fg[1], fg[2], ft))
+                # 将目录详细数据添加到 pd 列表
+        sql = "insert into API_Photo_File values(%s,%s,%s,%s,%s,%s)"
+        dtt = d.edit("delete from API_Photo_File")
+        itt = d.insert(sql, pd)
+        if dp:
+            return self.__delfile(dp)
+        if rp:
+            self.__rephoto(rp, self.Psize)
+        return '修改数量：' + str(len(rp)), rp, '删除数量：' + str(len(dp)), dp, '检索文件数量：' + str(len(pd)), dtt, itt
