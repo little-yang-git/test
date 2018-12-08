@@ -309,7 +309,7 @@ class LinkPhoto(object):
             out = im.resize((x_s, y_s), Image.ANTIALIAS)
             out.save(file.replace('@.', '@S.'))
 
-    def run(self):
+    def nas(self):
         # 图片检索主程序
         d = LinkDb('GNet')
         if not d.get()[-1]: return d.get()
