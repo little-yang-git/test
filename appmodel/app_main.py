@@ -380,7 +380,7 @@ class LinkPhoto(object):
         dtt = db.edit("delete from API_Photo_File")
         itt = db.insert(sql, pd)
         if dp:
-            return self.__delfile(dp)
+            self.__delfile(dp)
         if rp:
             self.__rephoto(rp, self.Psize)
         return '修改数量：' + str(len(rp)), rp, '删除数量：' + str(len(dp)), dp, '检索文件数量：' + str(len(pd)), dtt, itt
