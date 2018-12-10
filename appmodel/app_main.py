@@ -301,7 +301,7 @@ class LinkPhoto(object):
         else:
             return True
 
-    def __rephoto(self, files, rs):  # rs为最长边数值
+    def __rephoto(self, files, rs, rplx):  # rs为最长边数值
         # 修改图片文件像素
         for file in files:
             im = Image.open(file)
@@ -313,7 +313,13 @@ class LinkPhoto(object):
                 y_s = rs
                 x_s = round(x * rs / y)
             out = im.resize((x_s, y_s), Image.ANTIALIAS)
-            out.save(file.replace('@.', '@S.'))
+            if rplx == 'nas':
+                outfile = file.replace('@.', '@S.')
+            elif rplx == 'zb':
+                (fp, f) = os.path.split(file)
+                outfile = "//192.168.8.11/"
+            out.save(outfile)
+
 
     def nas(self):
         # 图片检索主程序
@@ -387,4 +393,5 @@ class LinkPhoto(object):
             self.__delfile(dp)
         if rp:
             self.__rephoto(rp, self.psize)
+            print(self.psize)
         return '修改数量：' + str(len(rp)), rp, '删除数量：' + str(len(dp)), dp, '检索文件数量：' + str(len(pd)), dtt, itt
