@@ -386,8 +386,8 @@ class LinkPhoto(object):
                 # 生成目录状态
                 pd.append((os.path.join(r, d), d, fg[0], fg[1], fg[2], ft))
                 # 将目录详细数据添加到 pd 列表
-        sql = "insert into PhotoFile_Nas values(%s,%s,%s,%s,%s,%s)"
-        dtt = db.edit("delete from Photo_File_Nas")
+        sql = "insert into API_Photo_File values(%s,%s,%s,%s,%s,%s)"
+        dtt = db.edit("delete from API_Photo_File")
         itt = db.insert(sql, pd)
         if dp:
             self.__delfile(dp)

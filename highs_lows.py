@@ -1,13 +1,11 @@
-# FileName : PyQtDemo.py
-# Author   : Adil
-# DateTime : 2018/2/1 11:07
-# SoftWare : PyCharm
+import os
+import re
 
-
-from PyQt5 import QtWidgets, QtGui
-import sys
-
-app = QtWidgets.QApplication(sys.argv)
-window = QtWidgets.QWidget()
-window.show()
-sys.exit(app.exec_())
+a = 'FY-11229A枣红3590'.upper()
+b = a.encode('utf-8')
+p = re.compile(r'/w*[\u4E00-\u9FA5]')
+x = p.findall(a)
+print(x)
+z = re.findall(r'(.*[A-Za-z0-9-])(.*[\u4E00-\u9FA5])', a)
+print(z)
+print(type(z[0][1]))
