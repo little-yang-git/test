@@ -2,17 +2,22 @@ from appmodel.app_main import *
 import datetime
 
 start = datetime.datetime.now()
-# while True:
-#     a = LinkApi()
-#     txt = a.goods(update='yes')
-#     print(txt + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-#     sys.stdout.flush()
-#     time.sleep(2)
 
-a = LinkPhoto('/Volumes/图片/整理/2018秋冬10月/10.11/11.20 修好').nas()
+while True:
+    a = LinkApi()
+    txt = a.goods(update='yes')
+    print(txt)
+    print('Efast库存检索；运行时间：%s 秒' % (datetime.datetime.now() - start))
+    # print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    sys.stdout.flush()
+    pzb = LinkPhoto().zb(update=False)
+    print(pzb)
+    print('总部照片检索；运行时间：%s 秒' % (datetime.datetime.now() - start))
+    sys.stdout.flush()
+    pnas = LinkPhoto().nas()
+    print(pnas)
+    print('Nas照片检索；运行时间：%s 秒' % (datetime.datetime.now() - start))
+    sys.stdout.flush()
+    end = datetime.datetime.now()
+    # time.sleep(600)
 
-for i in a:
-    print(i)
-
-end = datetime.datetime.now()
-print('Running time: %s Seconds' % (end - start))

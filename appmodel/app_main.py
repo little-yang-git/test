@@ -86,7 +86,8 @@ class LinkDb(object):
                 try:
                     f[0].execute(sqltxt)
                     rows = f[0].fetchall()
-                    return rows
+                    fc = f[0].rowcount
+                    return rows, fc
                 except Exception as e:
                     return str(e)
             else:
@@ -98,7 +99,8 @@ class LinkDb(object):
                 try:
                     f[0].execute(sqltxt)
                     f[1].commit()
-                    return 'Edit is OK'
+                    fc = f[0].rowcount
+                    return '%s Rows %s is OK.' % (sqltxt.split(' ')[0].title(), fc)
                 except Exception as e:
                     f[1].rollback()
                     return str(e)
@@ -111,7 +113,8 @@ class LinkDb(object):
                 try:
                     f[0].executemany(sqltxt, intxt)
                     f[1].commit()
-                    return 'Insert is OK'
+                    fc = f[0].rowcount
+                    return '%s Rows %s is OK.' % (sqltxt.split(' ')[0].title(), fc)
                 except Exception as e:
                     f[1].rollback()
                     return str(e)
@@ -315,20 +318,24 @@ class LinkPhoto(object):
     def __rephoto(self, files, rs, rplx, path=[]):  # rs为最长边数值
         # 修改图片文件像素
         for file in files:
-            im = Image.open(file)
-            (x, y) = im.size
-            if x > y:
-                x_s = rs
-                y_s = round(y * rs / x)
-            else:
-                y_s = rs
-                x_s = round(x * rs / y)
-            out = im.resize((x_s, y_s), Image.ANTIALIAS)
-            if rplx == 'nas':
-                outfile = file.replace('@.', '@S.')
-            elif rplx == 'zb':
-                outfile = path[files.index(file)][0]
-            out.save(outfile)
+            try:
+                im = Image.open(file)
+                (x, y) = im.size
+                if x > y:
+                    x_s = rs
+                    y_s = round(y * rs / x)
+                else:
+                    y_s = rs
+                    x_s = round(x * rs / y)
+                out = im.resize((x_s, y_s), Image.ANTIALIAS)
+                if rplx == 'nas':
+                    outfile = file.replace('@.', '@S.')
+                elif rplx == 'zb':
+                    outfile = path[files.index(file)]
+                out.convert('RGB')
+                out.save(outfile)
+            except Exception as e:
+                print(file, outfile, e)
 
     def nas(self, dirs=None):
         # 图片检索主程序
@@ -409,13 +416,12 @@ class LinkPhoto(object):
     def zb(self, dirs=None, update=True):
         if not dirs:
             dirs = jsonfile("PhotoDir")
-            dir_zb = dirs['zb']
-            dir_nas = dirs['zb_nas']
-        print('检索路径为' + dirs)
+        dir_zb = dirs['zb']
+        dir_nas = dirs['zb_nas']
+        print('检索路径为')
+        print(dirs)
         dbname = jsonfile("LinkDB", "DB", "zb")
         db = LinkDb('GNet')
-        fs_nas = [os.path.join(r, f) for r, ds, fs in os.walk(dir_zb) for f in fs if
-                  os.path.splitext(f)[-1] in ['.jpg', '.JPG']]
         fs = [os.path.join(r, f) for r, ds, fs in os.walk(dir_zb) for f in fs if
               os.path.splitext(f)[-1] in ['.jpg', '.JPG']]
         zb_files = []
@@ -428,28 +434,37 @@ class LinkPhoto(object):
                 if z:
                     p[0] = ''.join(z).upper()
                     p[1] = ''.join(y) if y else ''
-                    zb_files.append((f, p[0], p[1], ''))
+                    zb_files.append((f, p[0], p[1], self.__runtime))
             except Exception as e:
                 print(e, f, z, y)
-
-        pp = jsonfile('PhotoDir', 'zb_nas')
-        pp = r"c:\2"
-        n_fb = []
-        n_fs = []
-        oldfile = []
-        for pi in range(len(zb_files)):
-            newf = zb_files[pi][1] + "@" + zb_files[pi][2] + ".jpg" if zb_files[pi][2] else zb_files[pi][1] + ".jpg"
-            n_fb.append([os.path.join(pp, newf), zb_files[pi][1], zb_files[pi][2], zb_files[pi][3]])
-            n_fs.append([os.path.join(pp + os.sep + '小图', newf), zb_files[pi][1], zb_files[pi][2], zb_files[pi][3]])
-            oldfile.append(zb_files[pi][0])
-        self.__rephoto(oldfile, 2000, 'zb', n_fb)
-        self.__rephoto(oldfile, self.psize, 'zb', n_fs)
         if update:
             sql = "insert into " + dbname + "_T values(%s,%s,%s,%s)"
             dtt = db.edit("delete from " + dbname + "_T")
             itt = db.insert(sql, zb_files)
-            # ett = db.edit("DELETE FROM " + dbname + "_T WHERE (SPDM NOT IN "
-            #                                         "(SELECT SPDM FROM BSERP2.dbo.GNET_APP_SHANGPIN WHERE (SPDM = PhotoFile_ZB.SPDM)))")
-            return dtt, itt
+            db.edit("DELETE FROM " + dbname + "_T WHERE (dirs NOT IN (SELECT MIN(dirs) AS aa "
+                                              "FROM " + dbname + "_T AS a GROUP BY SPDM, COLOR))")
+            ett = db.edit("DELETE FROM " + dbname + "_T FROM " + dbname + "_T LEFT OUTER JOIN BSERP2.dbo.SHANGPIN AS SP"
+                        " ON " + dbname + "_T.SPDM = SP.SPDM WHERE (SP.SPDM IS NULL)")
+            stt = db.select("SELECT t.dirs, t.SPDM, t.COLOR FROM " + dbname + " AS zb RIGHT OUTER JOIN " + dbname + "_T AS t"
+                           " ON zb.SPDM = t.SPDM AND zb.COLOR = t.COLOR WHERE (zb.SPDM IS NULL)")
+            n_fb = []
+            n_fs = []
+            oldfile = []
+            for pi in stt[0]:
+                newf = pi['SPDM'] + "@" + pi['COLOR'] + ".jpg" if pi['COLOR'] else pi['SPDM'] + ".jpg"
+                n_fb.append(os.path.join(dir_nas, newf))
+                n_fs.append(os.path.join(dir_nas + os.sep + '小图', newf))
+                oldfile.append(pi['dirs'])
+            self.__rephoto(oldfile, 2000, 'zb', n_fb)
+            # self.__rephoto(oldfile, self.psize, 'zb', n_fs)
+            f_nas = [(dirs['zb_nas'] + os.sep + f, os.path.splitext(f)[0].split('@')[0],
+                      os.path.splitext(f)[0].split('@')[1], self.__runtime)
+                     if len(os.path.splitext(f)[0].split('@')) is 2 else
+                     (dirs['zb_nas'] + os.sep + f, os.path.splitext(f)[0].split('@')[0], '', self.__runtime)
+                     for f in os.listdir(dirs['zb_nas']) if os.path.splitext(f)[-1] in ['.jpg', '.JPG']]
+            sql = "insert into " + dbname + " values(%s,%s,%s,%s)"
+            db.edit("delete from " + dbname)
+            db.insert(sql, f_nas)
+            return '更新%s条记录。' % len(n_fb)
         else:
             return zb_files
