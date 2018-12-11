@@ -297,6 +297,7 @@ class LinkPhoto(object):
         self.dlx = delfile
         self.psize = photosize
         self.view = view
+        self.__runtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
     def __delfile(self, files):
         # 根据files列表，删除图片文件
@@ -407,11 +408,15 @@ class LinkPhoto(object):
 
     def zb(self, dirs=None, update=True):
         if not dirs:
-            dirs = jsonfile("PhotoDir", "zb")
+            dirs = jsonfile("PhotoDir")
+            dir_zb = dirs['zb']
+            dir_nas = dirs['zb_nas']
         print('检索路径为' + dirs)
         dbname = jsonfile("LinkDB", "DB", "zb")
         db = LinkDb('GNet')
-        fs = [os.path.join(r, f) for r, ds, fs in os.walk(dirs) for f in fs if
+        fs_nas = [os.path.join(r, f) for r, ds, fs in os.walk(dir_zb) for f in fs if
+                  os.path.splitext(f)[-1] in ['.jpg', '.JPG']]
+        fs = [os.path.join(r, f) for r, ds, fs in os.walk(dir_zb) for f in fs if
               os.path.splitext(f)[-1] in ['.jpg', '.JPG']]
         zb_files = []
         for f in fs:
@@ -426,8 +431,7 @@ class LinkPhoto(object):
                     zb_files.append((f, p[0], p[1], ''))
             except Exception as e:
                 print(e, f, z, y)
-        # for i in zb_files:
-        #     print(i)
+
         pp = jsonfile('PhotoDir', 'zb_nas')
         pp = r"c:\2"
         n_fb = []
@@ -441,11 +445,11 @@ class LinkPhoto(object):
         self.__rephoto(oldfile, 2000, 'zb', n_fb)
         self.__rephoto(oldfile, self.psize, 'zb', n_fs)
         if update:
-            sql = "insert into " + dbname + " values(%s,%s,%s,%s)"
-            dtt = db.edit("delete from " + dbname)
+            sql = "insert into " + dbname + "_T values(%s,%s,%s,%s)"
+            dtt = db.edit("delete from " + dbname + "_T")
             itt = db.insert(sql, zb_files)
-            ett = db.edit("DELETE FROM " + dbname + " WHERE (SPDM NOT IN "
-                                                    "(SELECT SPDM FROM BSERP2.dbo.GNET_APP_SHANGPIN WHERE (SPDM = PhotoFile_ZB.SPDM)))")
-            return dtt, itt, ett
+            # ett = db.edit("DELETE FROM " + dbname + "_T WHERE (SPDM NOT IN "
+            #                                         "(SELECT SPDM FROM BSERP2.dbo.GNET_APP_SHANGPIN WHERE (SPDM = PhotoFile_ZB.SPDM)))")
+            return dtt, itt
         else:
             return zb_files
