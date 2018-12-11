@@ -8,13 +8,22 @@ import pymssql as mssql
 import pymysql as mysql
 import os
 from PIL import Image
+import re
+import shutil
 
 
-def jsonfile(k, kk=None):  # n=数据库名称
+def jsonfile(k, kk=None, kkk=None):  # n=数据库名称
     """读取数据库连接属性 返回连接属性自定a[n]"""
-    with open(sys.path[0] + "/appmodel/links.json", 'rb') as f:
+    with open(sys.path[0] + os.sep + "appmodel" + os.sep + "links.json", 'rb') as f:
         lt = json.load(f)
-        return lt[k][kk] if kk in lt[k] else None if kk else lt[k] if k in lt else None
+        if kk:
+            if kkk:
+                return lt[k][kk][kkk]
+            else:
+                return lt[k][kk]
+        else:
+            return lt[k]
+        # return lt[k][kk] if kk in lt[k] else None if kk else lt[k] if k in lt else None
         # if kk:
         #     return lt[k][kk] if kk in lt[k] else None
         # else:
@@ -63,7 +72,7 @@ class LinkDb(object):
 
     def __init__(self, lk, inout='in'):
         # 数据库关键字=lk; 内外网参数=inout
-        self.__lk = lk
+        # self.__lk = lk
         self.link = jsonfile('LinkDB', lk)
         self.link['host'] = self.link['host'][inout]
 
@@ -109,9 +118,10 @@ class LinkDb(object):
             else:
                 return f
 
-    def runsql(self, sqlf):  # sqlf=sql文件路径
+    def runsql(self, sqlf):  # sqlf=sql文件名称
         """连接数据库执行sql文件"""
-        sql_file = "/Volumes/web/TP/app/" + sqlf + ".sql"
+        sf = jsonfile("LinkDB", "SqlFiles")
+        sql_file = sf + sqlf + ".sql"
         sql = ""
         with open(sql_file, 'r', encoding='gbk') as f:
             # 读取sql并转为gbk编码
@@ -181,6 +191,7 @@ class LinkApi(object):
         ps = 2
         rall = []
         apitxt = jsonfile('LinkApi', 'goods')
+        dbname = jsonfile('LinkDB', 'DB', 'goods')
         apitxt['key'] = self.__key
         if barcode: apitxt.update(barcode=barcode)
         if start_time:
@@ -230,15 +241,15 @@ class LinkApi(object):
         if update == 'no':
             return True, rall
         elif update == 'all':
-            sql = "insert into API_Kucun_Efast(SPDM,SPTM,COLOR_ID,SIZE_ID,SL,KW,etime) values(%s,%s,%s,%s,%s,%s,%s)"
-            dtt = d.edit("delete from API_Kucun_Efast")
+            sql = "insert into " + dbname + "(SPDM,SPTM,COLOR_ID,SIZE_ID,SL,KW,etime) values(%s,%s,%s,%s,%s,%s,%s)"
+            dtt = d.edit("delete from " + dbname)
             itt = d.insert(sql, rall)
             return True, dtt, itt
         elif update == 'yes':
-            sqlt = "insert into API_Kucun_Efast_T(SPDM,SPTM,COLOR_ID,SIZE_ID,SL,KW,etime) values(%s,%s,%s,%s,%s,%s,%s)"
-            dttt = d.edit("delete from API_Kucun_Efast_T")
+            sqlt = "insert into " + dbname + "_T(SPDM,SPTM,COLOR_ID,SIZE_ID,SL,KW,etime) values(%s,%s,%s,%s,%s,%s,%s)"
+            dttt = d.edit("delete from " + dbname + "_T")
             ittt = d.insert(sqlt, rall)
-            sf = d.runsql('API_Kucun_Efast')
+            sf = d.runsql(dbname)
             return True, dttt, ittt, sf
 
     def __goods_kwcf(self, data):
@@ -272,18 +283,17 @@ class LinkApi(object):
             z.append(uu)
         return z
 
-    def run(self):
-        a = self.__test
-        a['a'] = '1'
-        b = self.urlsign(a)
-        return b
+    # def run(self):
+    #     a = self.__test
+    #     a['a'] = '1'
+    #     b = self.urlsign(a)
+    #     return b
 
 
 class LinkPhoto(object):
 
-    def __init__(self, dirs, delfile=True, photosize=600, view=False):
+    def __init__(self, delfile=True, photosize=600, view=False):
         # 检索目录=dirs; 是否删除文件=delfile; 图片修改最长边=photosize; 显示检索过程=view
-        self.dirs = dirs
         self.dlx = delfile
         self.psize = photosize
         self.view = view
@@ -301,7 +311,7 @@ class LinkPhoto(object):
         else:
             return True
 
-    def __rephoto(self, files, rs, rplx):  # rs为最长边数值
+    def __rephoto(self, files, rs, rplx, path=[]):  # rs为最长边数值
         # 修改图片文件像素
         for file in files:
             im = Image.open(file)
@@ -316,19 +326,18 @@ class LinkPhoto(object):
             if rplx == 'nas':
                 outfile = file.replace('@.', '@S.')
             elif rplx == 'zb':
-                (fp, f) = os.path.split(file)
-                outfile = "//192.168.8.11/"
+                outfile = path[files.index(file)][0]
             out.save(outfile)
 
-
-    def nas(self):
+    def nas(self, dirs=None):
         # 图片检索主程序
-        print('检索路径为' + self.dirs)
+        if not dirs:
+            dirs = jsonfile("PhotoDir", "nas")
+        print('检索路径为' + dirs)
         db = LinkDb('GNet')
+        dbname = jsonfile("LinkDB", "DB", "nas")
         if not db.get()[-1]: return db.get()
         # 检查数据库是否可以连接
-        dt = self.dirs
-        # 接受检索路径
         fn = ['1@', '2@']
         # 图片类型列表
         pd = []
@@ -337,7 +346,7 @@ class LinkPhoto(object):
         # 生成小图列表
         dp = []
         # 删除列表
-        for r, ds, fs in os.walk(dt):
+        for r, ds, fs in os.walk(dirs):
             # 遍历检索目录
             if self.view: print(r)
             for d in ds:
@@ -386,12 +395,57 @@ class LinkPhoto(object):
                 # 生成目录状态
                 pd.append((os.path.join(r, d), d, fg[0], fg[1], fg[2], ft))
                 # 将目录详细数据添加到 pd 列表
-        sql = "insert into PhotoFile_Nas values(%s,%s,%s,%s,%s,%s)"
-        dtt = db.edit("delete from Photo_File_Nas")
+        sql = "insert into " + dbname + " values(%s,%s,%s,%s,%s,%s)"
+        dtt = db.edit("delete from " + dbname)
         itt = db.insert(sql, pd)
         if dp:
             self.__delfile(dp)
         if rp:
-            self.__rephoto(rp, self.psize)
+            self.__rephoto(rp, 'nas', self.psize)
             print(self.psize)
         return '修改数量：' + str(len(rp)), rp, '删除数量：' + str(len(dp)), dp, '检索文件数量：' + str(len(pd)), dtt, itt
+
+    def zb(self, dirs=None, update=True):
+        if not dirs:
+            dirs = jsonfile("PhotoDir", "zb")
+        print('检索路径为' + dirs)
+        dbname = jsonfile("LinkDB", "DB", "zb")
+        db = LinkDb('GNet')
+        fs = [os.path.join(r, f) for r, ds, fs in os.walk(dirs) for f in fs if
+              os.path.splitext(f)[-1] in ['.jpg', '.JPG']]
+        zb_files = []
+        for f in fs:
+            p = ['', '']
+            try:
+                ff = os.path.splitext(os.path.split(f)[-1])[0].replace(" ", "")
+                z = re.findall(r'^[A-Za-z][A-Za-z0-9-]*', ff)
+                y = re.findall(r'[\u4E00-\u9FA5]+', ff)
+                if z:
+                    p[0] = ''.join(z).upper()
+                    p[1] = ''.join(y) if y else ''
+                    zb_files.append((f, p[0], p[1], ''))
+            except Exception as e:
+                print(e, f, z, y)
+        # for i in zb_files:
+        #     print(i)
+        pp = jsonfile('PhotoDir', 'zb_nas')
+        pp = r"c:\2"
+        n_fb = []
+        n_fs = []
+        oldfile = []
+        for pi in range(len(zb_files)):
+            newf = zb_files[pi][1] + "@" + zb_files[pi][2] + ".jpg" if zb_files[pi][2] else zb_files[pi][1] + ".jpg"
+            n_fb.append([os.path.join(pp, newf), zb_files[pi][1], zb_files[pi][2], zb_files[pi][3]])
+            n_fs.append([os.path.join(pp + os.sep + '小图', newf), zb_files[pi][1], zb_files[pi][2], zb_files[pi][3]])
+            oldfile.append(zb_files[pi][0])
+        self.__rephoto(oldfile, 2000, 'zb', n_fb)
+        self.__rephoto(oldfile, self.psize, 'zb', n_fs)
+        if update:
+            sql = "insert into " + dbname + " values(%s,%s,%s,%s)"
+            dtt = db.edit("delete from " + dbname)
+            itt = db.insert(sql, zb_files)
+            ett = db.edit("DELETE FROM " + dbname + " WHERE (SPDM NOT IN "
+                                                    "(SELECT SPDM FROM BSERP2.dbo.GNET_APP_SHANGPIN WHERE (SPDM = PhotoFile_ZB.SPDM)))")
+            return dtt, itt, ett
+        else:
+            return zb_files

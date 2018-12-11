@@ -49,7 +49,13 @@
       "user": "sa",
       "pw": "FUFEN1230jincheng456",
       "db": "GNetBak"
-    }
+    },
+    "DB": {
+      "goods": "API_Kucun_Efast",
+      "nas": "PhotoFile_Nas",
+      "zb": "PhotoFile_ZB"
+    },
+    "SqlFiles": "\\\\192.168.1.250\\web\\TP\\app\\"
   },
   "LinkApi": {
     "url": "http://openapi.baotayun.com/openapi/webefast/web/?app_act=openapi/router",
@@ -75,5 +81,10 @@
       "page": "1",
       "store_code": "001"
     }
+  },
+  "PhotoDir": {
+    "nas": "\\\\192.168.8.11\\图片\\整理",
+    "zb": "\\\\192.168.1.250\\部门内部文件\\物流部",
+    "zb_nas": "\\\\192.168.8.11\\图片\\整理\\总部"
   }
 }
