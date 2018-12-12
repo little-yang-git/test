@@ -2,6 +2,7 @@ import os
 import time
 from appmodel.app_main import *
 
+
 db = LinkDb('GNet')
 tt = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 dirs = {'zb': '/Volumes/部门内部文件/物流部', 'zb_nas': '/Volumes/图片/整理/总部'}

@@ -1,5 +1,15 @@
 {
   "LinkDB": {
+    "BSERP2": {
+      "lx": "mssql",
+      "host": {
+        "in": "192.168.1.1",
+        "out": "60.29.21.146"
+      },
+      "user": "sa",
+      "pw": "FUFEN1230jincheng456",
+      "db": "BSERP2"
+    },
     "Gdata": {
       "lx": "mssql",
       "host": {
@@ -20,16 +30,6 @@
       "pw": "FUFEN1230jincheng456",
       "db": "GNet2"
     },
-    "BSERP2": {
-      "lx": "mssql",
-      "host": {
-        "in": "192.168.1.1",
-        "out": "60.29.21.146"
-      },
-      "user": "sa",
-      "pw": "FUFEN1230jincheng456",
-      "db": "BSERP2"
-    },
     "GNetMy": {
       "lx": "mysql",
       "host": {
@@ -40,15 +40,15 @@
       "pw": "FUFEN1230jincheng456",
       "db": "GNet"
     },
-    "GNetBak": {
+    "GNetOld": {
       "lx": "mssql",
       "host": {
-        "in": "192.168.8.80",
-        "out": "60.29.21.147"
+        "in": "192.168.1.1",
+        "out": "60.29.21.146"
       },
       "user": "sa",
       "pw": "FUFEN1230jincheng456",
-      "db": "GNetBak"
+      "db": "GNet"
     },
     "DB": {
       "goods": "API_Kucun_Efast",
@@ -85,6 +85,7 @@
   "PhotoDir": {
     "nas": "\\\\192.168.8.11\\图片\\整理",
     "zb": "\\\\192.168.1.250\\部门内部文件\\物流部",
-    "zb_nas": "\\\\192.168.8.11\\图片\\整理\\总部"
+    "zb_nas_b": "\\\\192.168.8.11\\图片\\整理\\总部",
+    "zb_nas_s": "\\\\192.168.8.11\\图片\\整理\\总部\\小图"
   }
 }
