@@ -12,5 +12,5 @@ from appmodel.app_main import *
 # db.edit("delete from PhotoFile_ZB")
 # db.insert(sql, f_nas)
 a = LinkApi().get()
-
+1
 print(a)
